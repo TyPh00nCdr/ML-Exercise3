@@ -3,15 +3,20 @@ function gda
   positives = cellfun(@imreadtodouble, glob("../PythonSrc/data/positives/p*.png"), "UniformOutput", false);
   negatives = cellfun(@imreadtodouble, glob("../PythonSrc/data/negatives/n*.png"), "UniformOutput", false);
   
-  uPos = mean(features(positives));
-  uNeg = mean(features(negatives));
+  feats_pos = features(positives); 
+  feats_neg = features(negatives);
+  
+  uPos = mean(feats_pos);
+  uNeg = mean(feats_neg);
  
   c = 0;
-  feats = [features(positives); features(negatives)]';
-  for feat = feats;
-    c += feat * feat';
+  for feat = feats_pos';
+    c += (feat - uPos) * (feat - uPos)';
   end
-  c /= rows(feats);
+  for feat = feats_neg';
+    c += (feat - uNeg) * (feat - uNeg)';
+  end
+  c /= (rows(feats_pos) + rows(feats_neg));
   
   # cov = arrayfun(@(feat) inspect(feat), feats(:), "UniformOutput", false);
   
