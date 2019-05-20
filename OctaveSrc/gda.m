@@ -22,6 +22,7 @@ function gda ()
   global invCovSigma = inv(covSigma);
   global detCovSigma = det(covSigma);
   
+  ## Output:
   printf("Sigma positive semi-definite?: %s\n", mat2str(all(eigs(covSigma) >= 0)));
   printf("Sigma's determinant: %d\n", detCovSigma);
   
