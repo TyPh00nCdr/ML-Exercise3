@@ -1,34 +1,64 @@
-function gda
-  ## Warning: Immediate in-memory operation (not lazy)
+function gda ()
+  # Clear all previously persisted global and persistent variables.
+  clear all;
+  # Warning: Immediate in-memory operation (not lazy)
   positives = cellfun(@imreadtodouble, glob("../PythonSrc/data/positives/p*.png"), "UniformOutput", false);
   negatives = cellfun(@imreadtodouble, glob("../PythonSrc/data/negatives/n*.png"), "UniformOutput", false);
   
-  feats_pos = features(positives); 
-  feats_neg = features(negatives);
+  featsPos = features(positives); 
+  featsNeg = features(negatives);
   
-  uPos = mean(feats_pos)';
-  uNeg = mean(feats_neg)';
+  global uPos = mean(featsPos)';
+  global uNeg = mean(featsNeg)';
  
-  global covSigma = 0;
-  for feat = feats_pos';
+  covSigma = zeros(columns(featsPos), rows(uPos));
+  for feat = featsPos';
     covSigma += (feat - uPos) * (feat - uPos)';
   end
-  for feat = feats_neg';
+  for feat = featsNeg';
     covSigma += (feat - uNeg) * (feat - uNeg)';
   end
-  covSigma /= (rows(feats_pos) + rows(feats_neg));
+  covSigma /= (rows(featsPos) + rows(featsNeg));
   global invCovSigma = inv(covSigma);
   global detCovSigma = det(covSigma);
   
-  disp(detCovSigma);
+  printf("Sigma positive semi-definite?: %s\n", mat2str(all(eigs(covSigma) >= 0)));
+  printf("Sigma's determinant: %d\n", detCovSigma);
   
+  printf("----------------------\n");
+  
+  printf("Label: 1, with prob: 1\n");
+  for feat = featsPos';
+    [prob, label] = classify(feat);
+    printf("Label: %d, with prob: %d\n", label, prob);
+  end
+  
+  printf("----------------------\n");
+  
+  printf("Negative Images:\n");
+  for feat = featsNeg';
+    [prob, label] = classify(feat);
+    printf("Label: %d, with prob: %d\n", label, prob);
+  end
+endfunction
+
+function [prob, label] = classify (x)
+  probX = probgiveny(x, 0) * 0.5 + probgiveny(x, 1) * 0.5;
+  [prob, label] = max([((probgiveny(x, 0) * 0.5) / probX) ((probgiveny(x, 1) * 0.5) / probX)]);
+  # MatLab/Octave starts idx at 1, not 0...
+  label -= 1;
 endfunction
 
 function prob = probgiveny (x, y)
-  leftTerm = 1 / ((2 * pi)^(length(feat) / 2) * sqrt(detCovSigma));
-  if (y == 0)
+  ## Probability of feature vector x given label y: p(x | y = {0, 1})
+  global invCovSigma detCovSigma uPos uNeg;
+  persistent leftTerm;
+  if isempty(leftTerm)
+    leftTerm = 1 / ((2 * pi)^(length(x) / 2) * sqrt(detCovSigma));
+  endif
+  if y == 0
     prob = leftTerm * exp(-0.5 * (x - uNeg)' * invCovSigma * (x - uNeg));
-  elseif (y == 1) 
+  elseif y == 1
     prob = leftTerm * exp(-0.5 * (x - uPos)' * invCovSigma * (x - uPos));
   endif
 endfunction
@@ -44,7 +74,7 @@ function feats = features (doubleimgs)
   
   function allfeats = rgbfeats (doubleimg)
     ## Collect all features from a single (24 x 24 x 3) image matrix
-    allfeats = [feature(doubleimg(:, :, 1)) feature(doubleimg(:, :, 2)) feature(doubleimg(:, :, 3))] #feature(rgb2gray(doubleimg))];
+    allfeats = [feature(doubleimg(:, :, 1)) feature(doubleimg(:, :, 2)) feature(doubleimg(:, :, 3))]; # feature(rgb2gray(doubleimg))];
     # allfeats = feature(rgb2gray(doubleimg));
   endfunction
 endfunction
