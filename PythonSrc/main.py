@@ -26,29 +26,15 @@ def main():
     print('Highest y=0', prob_x_given_y(u_neg, 0))
     print('Highest x=0', prob_x_given_y(u_pos, 1))
 
-    global numpy_cov
-    numpy_cov = (np.cov([features(x) for x in positives], rowvar=False) + np.cov([features(x) for x in negatives],
-                                                                                 rowvar=False)) / 2
-
-    diff_mat = np.abs(np.abs(numpy_cov) - np.abs(cov))
-    print('Max difference between Cov-Matrices', np.unravel_index(np.argmax(diff_mat, axis=None), diff_mat.shape))
-
-    # print('Covariance Matrix:', numpy_cov)
-    print('Determinate:', np.linalg.det(numpy_cov))
-    print('Definite positive: ', np.all(np.linalg.eigvals(numpy_cov) > 0))
-    # print('Sqrt of Determinant:', np.sqrt(np.linalg.det(numpy_cov)))
-
     print('POSITIVES:')
     for pos in positives:
-        # feat = predict(features(pos))
-        # print(feat)
-        pass
+        feat = predict(features(pos))
+        print(feat)
 
     print('NEGATIVES:')
     for neg in negatives:
-        # feat = predict(features(neg))
-        # print(feat)
-        pass
+        feat = predict(features(neg))
+        print(feat)
 
 
 def prob_x_given_y(feat, y):
@@ -73,7 +59,7 @@ def prob_phi(y):
 
 
 def features(im):
-    return feature(im[:, :, 0]) + feature(im[:, :, 1]) + feature(im[:, :, 2]) + feature(color.rgb2gray(im))
+    return feature(im[:, :, 0]) + feature(im[:, :, 1]) + feature(im[:, :, 2])  # + feature(color.rgb2gray(im))
     # return feature(color.rgb2gray(im))
 
 
